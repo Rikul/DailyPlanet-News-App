@@ -25,7 +25,7 @@ class ConvertersTest {
     }
 
     @Test
-    fun `toSource should convert String to Source`() {
+    fun `toSource should convert String to Source with id and name equal`() {
         // Arrange
         val name = "BBC News"
 
@@ -33,12 +33,13 @@ class ConvertersTest {
         val result = converters.toSource(name)
 
         // Assert
+        // toSource creates Source(name, name) so both id and name are set to the input
         assertEquals(name, result.id)
         assertEquals(name, result.name)
     }
 
     @Test
-    fun `fromSource and toSource should be reversible`() {
+    fun `fromSource and toSource roundtrip preserves name`() {
         // Arrange
         val originalName = "CNN"
         val source = Source(id = "cnn", name = originalName)
@@ -48,9 +49,10 @@ class ConvertersTest {
         val reversed = converters.toSource(converted)
 
         // Assert
+        // Note: fromSource extracts only the name, so original id is lost in roundtrip
         assertEquals(originalName, converted)
         assertEquals(originalName, reversed.name)
-        assertEquals(originalName, reversed.id)
+        assertEquals(originalName, reversed.id) // id equals name after roundtrip
     }
 
     @Test
