@@ -18,14 +18,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.dailyplanet.R
 import com.example.dailyplanet.ui.viewmodel.NewsPagingState
 import com.example.dailyplanet.ui.viewmodel.NewsViewModel
+import com.example.dailyplanet.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun NewsScreen(viewModel: NewsViewModel) {
+fun NewsScreen(viewModel: NewsViewModel, settingsViewModel: SettingsViewModel) {
     val savedArticles by viewModel.savedNews.collectAsStateWithLifecycle()
     val categories = viewModel.categories
     val breakingNewsStateMap by viewModel.breakingNewsStateMap.collectAsStateWithLifecycle()
+    
+    val textSize by settingsViewModel.textSize.collectAsStateWithLifecycle()
+    val font by settingsViewModel.font.collectAsStateWithLifecycle()
+    val viewType by settingsViewModel.viewType.collectAsStateWithLifecycle()
+
     val pagerState = rememberPagerState(pageCount = { categories.size })
     val coroutineScope = rememberCoroutineScope()
 
@@ -93,7 +99,10 @@ fun NewsScreen(viewModel: NewsViewModel) {
                 state = state,
                 savedArticles = savedArticles,
                 viewModel = viewModel,
-                onLoadMore = { viewModel.getBreakingNewsNextPage(category) }
+                onLoadMore = { viewModel.getBreakingNewsNextPage(category) },
+                textSize = textSize,
+                font = font,
+                viewType = viewType
             )
         }
     }

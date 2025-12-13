@@ -19,23 +19,62 @@ import androidx.compose.ui.graphics.Color // <-- THIS IMPORT WAS MISSING
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.TextUnit
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.dailyplanet.R
 import com.example.dailyplanet.models.Article
+import com.example.dailyplanet.repository.AppFont
+import com.example.dailyplanet.repository.TextSize
+import com.example.dailyplanet.repository.ViewType
 import com.example.dailyplanet.ui.viewmodel.NewsViewModel
+
+// Custom semantics property for font size testing
+val FontSizeKey = SemanticsPropertyKey<TextUnit>("FontSize")
+var SemanticsPropertyReceiver.fontSize by FontSizeKey
+
+// Custom semantics property for font family testing
+val FontFamilyKey = SemanticsPropertyKey<FontFamily>("FontFamily")
+var SemanticsPropertyReceiver.fontFamily by FontFamilyKey
 
 @Composable
 fun NewsCard(
     article: Article,
     viewModel: NewsViewModel,
-    isFavorite: Boolean
+    isFavorite: Boolean,
+    textSize: TextSize,
+    font: AppFont,
+    viewType: ViewType
 ) {
     val context = LocalContext.current
     val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
+
+    val titleFontSize = when (textSize) {
+        TextSize.Small -> 16.sp
+        TextSize.Medium -> 20.sp
+        TextSize.Large -> 24.sp
+    }
+    
+    val bodyFontSize = when (textSize) {
+        TextSize.Small -> 12.sp
+        TextSize.Medium -> 14.sp
+        TextSize.Large -> 16.sp
+    }
+
+    val fontFamily = when (font) {
+        AppFont.Default -> FontFamily.Default
+        AppFont.Serif -> FontFamily.Serif
+        AppFont.Monospace -> FontFamily.Monospace
+    }
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -56,31 +95,40 @@ fun NewsCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(article.urlToImage)
-                    .crossfade(true)
-                    .placeholder(R.drawable.image_placeholder)
-                    .error(R.drawable.image_placeholder)
-                    .build(),
-                contentDescription = article.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
-            )
+            if (viewType != ViewType.HeadlinesOnly) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(article.urlToImage)
+                        .crossfade(true)
+                        .placeholder(R.drawable.image_placeholder)
+                        .error(R.drawable.image_placeholder)
+                        .build(),
+                    contentDescription = article.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .testTag("NewsImage")
+                )
+            }
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = article.source?.name ?: "Unknown Source",
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelMedium.copy(fontFamily = fontFamily),
                     color = Color.Red
                 )
                 Text(
                     text = article.title ?: "No Title",
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2,
+                    style = MaterialTheme.typography.titleMedium.copy(fontSize = titleFontSize, fontFamily = fontFamily),
+                    maxLines = if (viewType == ViewType.HeadlinesOnly) 3 else 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .semantics {
+                            fontSize = titleFontSize
+                            this.fontFamily = fontFamily
+                        }
+                        .testTag("ArticleTitle")
                 )
 
                 Row(
@@ -88,14 +136,20 @@ fun NewsCard(
                     verticalAlignment = Alignment.Bottom,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = article.description ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f)
-                    )
+                    if (viewType != ViewType.HeadlinesOnly) {
+                        Text(
+                            text = article.description ?: "",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = bodyFontSize, fontFamily = fontFamily),
+                            maxLines = 5,
+                            overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("ArticleDescription")
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                     Row {
                         IconButton(onClick = {
                             val sendIntent = Intent().apply {

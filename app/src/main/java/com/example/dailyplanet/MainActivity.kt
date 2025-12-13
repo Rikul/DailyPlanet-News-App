@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -22,12 +23,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.dailyplanet.ui.composables.AboutDialog
 import com.example.dailyplanet.ui.composables.FavoritesScreen
 import com.example.dailyplanet.ui.composables.NewsScreen
 import com.example.dailyplanet.ui.composables.SearchScreen
+import com.example.dailyplanet.ui.composables.SettingsScreen
 import com.example.dailyplanet.ui.theme.DailyPlanetTheme
 import com.example.dailyplanet.ui.viewmodel.NewsViewModel
+import com.example.dailyplanet.ui.viewmodel.SettingsViewModel
 
 data class BottomNavItem(val label: String, val icon: ImageVector, val route: String)
 
@@ -38,6 +40,7 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         val newsViewModel by viewModels<NewsViewModel>()
+        val settingsViewModel by viewModels<SettingsViewModel>()
 
         setContent {
             DailyPlanetTheme {
@@ -45,17 +48,11 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
 
-                var showAboutDialog by remember { mutableStateOf(false) }
-
-                if (showAboutDialog) {
-                    AboutDialog(onDismiss = { showAboutDialog = false })
-                }
-
                 val items = listOf(
                     BottomNavItem("Home", Icons.Default.Home, "home"),
                     BottomNavItem("Search", Icons.Default.Search, "search"),
                     BottomNavItem("Favorites", Icons.Default.Favorite, "favorites"),
-                    BottomNavItem("About", Icons.Default.Info, "about")
+                    BottomNavItem("Settings", Icons.Default.Settings, "settings")
                 )
 
                 Scaffold(
@@ -68,18 +65,14 @@ class MainActivity : ComponentActivity() {
                                 NavigationBarItem(
                                     icon = { Icon(screen.icon, contentDescription = null) },
                                     label = { Text(screen.label) },
-                                    selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true && screen.route != "about",
+                                    selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                                     onClick = {
-                                        if (screen.route == "about") {
-                                            showAboutDialog = true
-                                        } else {
-                                            navController.navigate(screen.route) {
-                                                popUpTo(navController.graph.findStartDestination().id) {
-                                                    saveState = true
-                                                }
-                                                launchSingleTop = true
-                                                restoreState = true
+                                        navController.navigate(screen.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
                                             }
+                                            launchSingleTop = true
+                                            restoreState = true
                                         }
                                     },
                                     colors = NavigationBarItemDefaults.colors(
@@ -99,9 +92,10 @@ class MainActivity : ComponentActivity() {
                         startDestination = "home",
                         modifier = Modifier.padding(innerPadding)
                     ) {
-                        composable("home") { NewsScreen(viewModel = newsViewModel) }
-                        composable("search") { SearchScreen(viewModel = newsViewModel) }
-                        composable("favorites") { FavoritesScreen(viewModel = newsViewModel) }
+                        composable("home") { NewsScreen(viewModel = newsViewModel, settingsViewModel = settingsViewModel) }
+                        composable("search") { SearchScreen(viewModel = newsViewModel, settingsViewModel = settingsViewModel) }
+                        composable("favorites") { FavoritesScreen(viewModel = newsViewModel, settingsViewModel = settingsViewModel) }
+                        composable("settings") { SettingsScreen(viewModel = settingsViewModel) }
                     }
                 }
             }

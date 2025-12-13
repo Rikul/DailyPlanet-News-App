@@ -18,13 +18,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.dailyplanet.ui.viewmodel.NewsViewModel
+import com.example.dailyplanet.ui.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen(viewModel: NewsViewModel) {
+fun SearchScreen(viewModel: NewsViewModel, settingsViewModel: SettingsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val searchState by viewModel.searchNewsState.collectAsStateWithLifecycle()
     val savedArticles by viewModel.savedNews.collectAsStateWithLifecycle()
+    
+    val textSize by settingsViewModel.textSize.collectAsStateWithLifecycle()
+    val font by settingsViewModel.font.collectAsStateWithLifecycle()
+    val viewType by settingsViewModel.viewType.collectAsStateWithLifecycle()
+
     val keyboardController = LocalSoftwareKeyboardController.current
 
     // The Scaffold is removed, and Column is now the root element.
@@ -95,7 +101,10 @@ fun SearchScreen(viewModel: NewsViewModel) {
                 state = searchState,
                 savedArticles = savedArticles,
                 viewModel = viewModel,
-                onLoadMore = { viewModel.getSearchNewsNextPage() }
+                onLoadMore = { viewModel.getSearchNewsNextPage() },
+                textSize = textSize,
+                font = font,
+                viewType = viewType
             )
         }
     }

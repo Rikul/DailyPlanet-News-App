@@ -2,7 +2,10 @@ package com.example.dailyplanet.ui.composables
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
@@ -12,12 +15,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.dailyplanet.repository.ViewType
 import com.example.dailyplanet.ui.viewmodel.NewsViewModel
+import com.example.dailyplanet.ui.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavoritesScreen(viewModel: NewsViewModel) {
+fun FavoritesScreen(viewModel: NewsViewModel, settingsViewModel: SettingsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
     val savedArticles by viewModel.savedNews.collectAsStateWithLifecycle()
+    val textSize by settingsViewModel.textSize.collectAsStateWithLifecycle()
+    val font by settingsViewModel.font.collectAsStateWithLifecycle()
+    val viewType by settingsViewModel.viewType.collectAsStateWithLifecycle()
 
     // The Scaffold is removed, and Column is now the root element.
     Column(modifier = Modifier.fillMaxSize()) {
@@ -49,16 +57,40 @@ fun FavoritesScreen(viewModel: NewsViewModel) {
                     )
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(
-                        items = savedArticles,
-                        key = { article -> article.url }
-                    ) { article ->
-                        NewsCard(
-                            article = article,
-                            viewModel = viewModel,
-                            isFavorite = true
-                        )
+                if (viewType == ViewType.Tile) {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(1),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        itemsIndexed(
+                            items = savedArticles,
+                            key = { index, article -> "${article.url}-$index" }
+                        ) { _, article ->
+                            NewsCard(
+                                article = article,
+                                viewModel = viewModel,
+                                isFavorite = true,
+                                textSize = textSize,
+                                font = font,
+                                viewType = viewType
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        itemsIndexed(
+                            items = savedArticles,
+                            key = { index, article -> "${article.url}-$index" }
+                        ) { _, article ->
+                            NewsCard(
+                                article = article,
+                                viewModel = viewModel,
+                                isFavorite = true,
+                                textSize = textSize,
+                                font = font,
+                                viewType = viewType
+                            )
+                        }
                     }
                 }
             }
